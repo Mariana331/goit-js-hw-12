@@ -1,4 +1,3 @@
-//
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
@@ -8,56 +7,93 @@ import {
   clearGallery,
   showLoader,
   hideLoader,
+  hideLoadMoreButton,
+  showLoadMoreButton,
 } from './js/render-function.js';
 
 const form = document.querySelector('.form');
 const input = form.querySelector('input');
+const btn = document.querySelector('.btn');
 
-form.addEventListener('submit', event => {
+let currentQuery = '';
+let currentPage = 1;
+const perPage = 15;
+let totalPages = 0;
+
+form.addEventListener('submit', async event => {
   event.preventDefault();
-
   const query = input.value.trim();
 
-  // Якщо інпут порожній, показуємо повідомлення і зупиняємо подальше виконання
-  if (query === '') {
-    iziToast.warning({
+  if (!query) {
+    return iziToast.warning({
       title: 'Warning',
       message: 'Please enter a search query',
-      backgroundColor: ' #ef4040',
+      backgroundColor: '#ef4040',
       position: 'topRight',
     });
-    return; // Зупиняємо виконання події
   }
 
-  showLoader(); // Показуємо лоадер
-  clearGallery(); // Очищаємо галерею перед новим запитом
-
-  getImagesByQuery(query)
-    .then(data => {
-      if (data.hits.length === 0) {
-        iziToast.error({
-          title: 'No results',
-          position: 'topRight',
-          backgroundColor: ' #ef4040',
-          message:
-            'Sorry, there are no images matching your search query. Please try again!',
-        });
-        return; // Якщо немає зображень, зупиняємо подальшу обробку
-      }
-
-      createGallery(data.hits); // Якщо зображення є, додаємо їх до галереї
-    })
-    .catch(error => {
-      iziToast.error({
-        title: 'Error',
-        message:
-          'An error occurred while fetching the images. Please try again later.',
-        position: 'topRight',
-        backgroundColor: ' #ef4040',
-      });
-    })
-    .finally(() => {
-      hideLoader(); // Приховуємо лоадер після виконання
-      form.reset(); // Очищаємо форму після завершення
-    });
+  currentQuery = query;
+  currentPage = 1;
+  clearGallery();
+  hideLoadMoreButton();
+  await loadImages();
+  form.reset();
 });
+
+btn.addEventListener('click', async () => {
+  currentPage++;
+  await loadImages(true);
+});
+
+async function loadImages(isLoadMore = false) {
+  showLoader();
+  btn.disabled = true;
+
+  try {
+    const data = await getImagesByQuery(currentQuery, currentPage, perPage);
+
+    if (!data.hits.length) {
+      hideLoadMoreButton();
+      return iziToast.error({
+        title: 'No results',
+        message: 'Sorry, there are no images matching your search query.',
+        backgroundColor: '#ef4040',
+        position: 'topRight',
+      });
+    }
+
+    createGallery(data.hits);
+    totalPages = Math.ceil(data.totalHits / perPage);
+
+    if (currentPage < totalPages) {
+      showLoadMoreButton();
+    } else {
+      hideLoadMoreButton();
+      iziToast.info({
+        title: 'End',
+        message: "You've reached the end of search results.",
+        backgroundColor: '#4CAF50',
+        position: 'topRight',
+      });
+    }
+
+    if (isLoadMore) {
+      const { height } = document
+        .querySelector('.gallery-item')
+        .getBoundingClientRect();
+      window.scrollBy({ top: height * 2, behavior: 'smooth' });
+    }
+  } catch (err) {
+    iziToast.error({
+      title: 'Error',
+      message: 'An error occurred while fetching images.',
+      backgroundColor: '#ef4040',
+      position: 'topRight',
+    });
+    hideLoadMoreButton();
+  } finally {
+    hideLoader();
+    btn.disabled = false;
+  }
+}
