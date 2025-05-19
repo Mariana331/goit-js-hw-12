@@ -11,7 +11,6 @@ const newLightBox = new SimpleLightbox(`.gallery a`, {
   captionDelay: 250,
 });
 
-розмітка;
 export function createGallery(images) {
   const markup = images
     .map(

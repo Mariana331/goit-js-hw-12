@@ -9,7 +9,7 @@ import {
   hideLoader,
   hideLoadMoreButton,
   showLoadMoreButton,
-} from './js/render-function.js';
+} from './js/render-functions.js';
 
 const form = document.querySelector('.form');
 const input = form.querySelector('input');
