@@ -1,6 +1,6 @@
 # Vanilla App Template
 
-![Demo Badge](https://img.shields.io/badge/Demo-Online-brightgreen)
+![Demo Badge][(https://img.shields.io/badge/Live-Demo-brightgreen)](https://mariana331.github.io/goit-js-hw-12/)
 
 ---
 
